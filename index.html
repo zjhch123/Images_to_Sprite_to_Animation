@@ -1,0 +1,134 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+input, canvas {
+  display: inline-block;
+  vertical-align: top;
+}
+img {
+  display: none;
+}
+.fake {
+  vertical-align: top;
+  display: inline-block;
+}
+.paragraph {
+  vertical-align: top;
+  max-height: 300px;
+  overflow: auto;
+  width: 500px;
+  display: inline-block;
+  font-size: 14px;
+}
+</style>
+</head>
+<body>
+  <div>
+    <input type="file" id="input" multiple/>
+    <input type="number" id="step" placeholder="输入时间间隔"/>
+    <a href="javascript:;" id="start">开始制作</a>
+  </div>
+  <div>
+    <div class="fake"></div>
+    <p class="paragraph"></p>
+    <canvas id="canvas"></canvas>
+  </div>
+</body>
+<script>
+const DOM = document.querySelector('#input')
+const canvas = document.querySelector('#canvas')
+const ctx = canvas.getContext('2d')
+const old = console.log
+console.log = function (msg) {
+  document.querySelector('p').innerText += msg + '\n'
+  old.apply(window, arguments)
+}
+
+
+document.getElementById('start').addEventListener('click', function() {
+  document.querySelector('.paragraph').innerHTML = ''
+  document.querySelectorAll('img').forEach(item => {
+    document.body.removeChild(item)
+  })
+  ctx.clearRect(0,0, 99999, 99999)
+  const sorted = [].slice.call(DOM.files).sort(function(arg1, arg2) {
+    return arg1.name.split('.')[0] - arg2.name.split('.')[0]
+  })
+  CreateSprite(sorted)
+})
+
+const fileReader = (file) => {
+  return new Promise((res, rej) => {
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      res(event.target.result)
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
+const CreateSprite = async (files) => {
+  let isCanvasSetSize = false
+  for (let index in files) {
+    const file = files[index]
+    const data = await fileReader(file)
+    const img = document.createElement('img')
+    document.body.appendChild(img)
+    img.onload = function() { 
+      ImageLoaded(files.length)
+    }
+    img.src = data
+  }
+}
+
+const ImageLoaded = (function() {
+  let nowLoaded = 0
+
+  const step = function(total, height, width) {
+      const steps = []
+      const persent = 100 / total
+      steps.push(`0% { background-position: 0 0 }`)
+      for(let i = 1; i < total; i++) {
+        steps.push(`${(persent * i).toFixed(2)}% { background-position: 0 -${i * height}px }`)
+      }
+      steps.push(`100% { background-position: 0 0 }`)
+      console.log(`
+      @keyframes fake {
+        ${steps.join('\n')}
+      }`)
+      console.log(`
+        .fake {
+          width: ${width}px;
+          height: ${height}px;
+          animation: fake ${(total * (document.getElementById('step').value || 0.07)).toFixed(2)}s steps(1, start) infinite;
+        }
+      `)
+      const style = document.createElement('style')
+      style.innerText = document.querySelector('p').innerText.replace(/<br>/g, '')
+      document.head.appendChild(style)
+      document.querySelector('.fake').style.backgroundImage = `url(${canvas.toDataURL()})`
+  }
+
+  return function(total) {
+    nowLoaded++
+    if (nowLoaded == total) {
+      const Images = document.querySelectorAll('img')
+      const maxWidth = [].slice.call(Images).map(i => i.width).sort((a, b) => -a + b)[0]
+      const maxHeight = [].slice.call(Images).map(i => i.height).sort((a, b) => -a + b)[0]
+      canvas.setAttribute('width', maxWidth)
+      canvas.setAttribute('height', maxHeight * total)
+      Images.forEach((img, index) => {
+        const drawX = (maxWidth - img.width) / 2
+        const drawY = index * maxHeight + (maxHeight - img.height) / 2
+        ctx.drawImage(img, drawX, drawY, img.width, img.height);
+      })
+      step(total, maxHeight, maxWidth)
+      nowLoaded = 0
+    }
+  }
+})()
+
+</script>
+</html>
