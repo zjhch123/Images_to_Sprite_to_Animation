@@ -9,3 +9,4 @@
 5. click `开始制作`
 
 ## Result
+![Result](https://raw.githubusercontent.com/zjhch123/Images_to_Sprite_to_Animation/master/preview/1.png)
