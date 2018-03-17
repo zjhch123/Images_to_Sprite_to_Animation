@@ -1,6 +1,8 @@
 # Images_to_Sprite_to_Animation
 多图合成雪碧图并创建帧动画
 
+[demo](https://static.hduzplus.xyz/sprite/)
+
 ## How to use
 1. `git clone`
 2. open this page by modern browser
