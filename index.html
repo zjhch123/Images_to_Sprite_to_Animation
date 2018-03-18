@@ -28,6 +28,7 @@ img {
   <div>
     <input type="file" id="input" multiple/>
     <input type="number" id="step" placeholder="输入时间间隔"/>
+    <input type="text" id="width" placeholder="输入宽高" />
     <a href="javascript:;" id="start">开始制作</a>
   </div>
   <div>
@@ -40,10 +41,8 @@ img {
 const DOM = document.querySelector('#input')
 const canvas = document.querySelector('#canvas')
 const ctx = canvas.getContext('2d')
-const old = console.log
-console.log = function (msg) {
+const print = function(msg) {
   document.querySelector('p').innerText += msg + '\n'
-  old.apply(window, arguments)
 }
 
 
@@ -54,9 +53,19 @@ document.getElementById('start').addEventListener('click', function() {
   })
   ctx.clearRect(0,0, 99999, 99999)
   const sorted = [].slice.call(DOM.files).sort(function(arg1, arg2) {
-    return arg1.name.split('.')[0] - arg2.name.split('.')[0]
+    const name1 = arg1.name
+    const name2 = arg2.name
+    const number1 = Number(name1.substr(0, name1.lastIndexOf('.')))
+    const number2 = Number(name2.substr(0, name2.lastIndexOf('.')))
+    return number1 - number2
   })
-  CreateSprite(sorted)
+  let width, height = NaN
+  try {
+    width = Number(document.getElementById('width').value.split('x')[0])
+    height = Number(document.getElementById('width').value.split('x')[1])
+  } catch (ex) {
+  }
+  CreateSprite(sorted, width, height)
 })
 
 const fileReader = (file) => {
@@ -69,7 +78,7 @@ const fileReader = (file) => {
   })
 }
 
-const CreateSprite = async (files) => {
+const CreateSprite = async (files, width, height) => {
   let isCanvasSetSize = false
   for (let index in files) {
     const file = files[index]
@@ -77,7 +86,7 @@ const CreateSprite = async (files) => {
     const img = document.createElement('img')
     document.body.appendChild(img)
     img.onload = function() { 
-      ImageLoaded(files.length)
+      ImageLoaded(files.length, width, height)
     }
     img.src = data
   }
@@ -94,11 +103,11 @@ const ImageLoaded = (function() {
         steps.push(`${(persent * i).toFixed(2)}% { background-position: 0 -${i * height}px }`)
       }
       steps.push(`100% { background-position: 0 0 }`)
-      console.log(`
+      print(`
       @keyframes fake {
         ${steps.join('\n')}
       }`)
-      console.log(`
+      print(`
         .fake {
           width: ${width}px;
           height: ${height}px;
@@ -111,12 +120,12 @@ const ImageLoaded = (function() {
       document.querySelector('.fake').style.backgroundImage = `url(${canvas.toDataURL()})`
   }
 
-  return function(total) {
+  return function(total, width, height) {
     nowLoaded++
     if (nowLoaded == total) {
       const Images = document.querySelectorAll('img')
-      const maxWidth = [].slice.call(Images).map(i => i.width).sort((a, b) => -a + b)[0]
-      const maxHeight = [].slice.call(Images).map(i => i.height).sort((a, b) => -a + b)[0]
+      const maxWidth = isNaN(width) || width == 0 ? [].slice.call(Images).map(i => i.width).sort((a, b) => -a + b)[0] : width
+      const maxHeight = isNaN(height) || height == 0 ?  [].slice.call(Images).map(i => i.height).sort((a, b) => -a + b)[0] : height
       canvas.setAttribute('width', maxWidth)
       canvas.setAttribute('height', maxHeight * total)
       Images.forEach((img, index) => {

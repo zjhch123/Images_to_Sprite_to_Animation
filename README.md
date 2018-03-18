@@ -10,5 +10,11 @@
 4. input a **NUMBER** into the second input dom
 5. click `开始制作`
 
+## update:
+* 2018-03-18: 
+ - 可以指定宽高，格式为宽x高，例如: 300x300，如果只想指定高，可以输入_x高，同理可得宽
+ - 文件名字中可以带小数点，例如:[1.png, 2.png, 2.1.png, 2.2.png, 3.png]这样的可以进行准确的输出
+
+
 ## Result
 ![Result](https://raw.githubusercontent.com/zjhch123/Images_to_Sprite_to_Animation/master/preview/1.png)
